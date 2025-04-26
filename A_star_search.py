@@ -1,39 +1,29 @@
 import heapq
 from itertools import count
 
-def a_star_search(graph, heuristics, start, goal):
-    counter = count()
-    
-    open_set = [(heuristics[start], next(counter), start)]
-    
-    came_from = {}
-    
-    g_scores = {node: float('inf') for node in graph}
-    g_scores[start] = 0
-    
-    while open_set:
-        _, _, current = heapq.heappop(open_set)
-        
+def a_star_search(graph, heuristics, start, goal): 
+    pq = []
+    heapq.heappush(pq, (0 + heuristics[start], start, [start], 0))
+    visited = set()
+
+    while pq:
+        f, current, path, g = heapq.heappop(pq)
+
+        if current in visited:
+            continue
+        visited.add(current)
+
         if current == goal:
-            path = []
-            while current in came_from:
-                path.append(current)
-                current = came_from[current]
-            path.append(start)
-            return path[::-1], g_scores[goal]
-        
-        for neighbor, distance in graph[current].items():
-            tentative_g = g_scores[current] + distance
-            
-            if tentative_g < g_scores[neighbor]:
-                came_from[neighbor] = current
-                g_scores[neighbor] = tentative_g
-                
-                f_score = tentative_g + heuristics[neighbor]
-                
-                heapq.heappush(open_set, (f_score, next(counter), neighbor))
-    
-    return None, None  
+            return path, g
+
+        for neighbor, cost in graph[current].items():
+            if neighbor not in visited:
+                new_g = g + cost
+                new_f = new_g + heuristics[neighbor]
+                heapq.heappush(pq, (new_f, neighbor, path + [neighbor], new_g))
+
+    return None, float('inf')
+
 
 graph = {
     'Home': {'Mirpur Road': 0.9, 'Town Hall': 0.49},
@@ -51,27 +41,15 @@ graph = {
 }
 
 heuristics = {
-    'Home': 5,
-    'Mirpur Road': 2,
-    'Asad Gate': 2,
-    'Town Hall': 1.5,
-    'Arong': 2,
-    'Museum': 3,
-    'Manik Mia Ave': 2,
-    'Panthapath': 2,
-    'Green Road': 2,
-    'Bijoy Soroni': 1.5,
-    'Farmgate': 1.5,
-    'UAP': 0
+    'Home': 2.97, 'Town Hall': 2.67, 'Mirpur Road': 2.06, 'Asad Gate': 1.86,
+    'Arong': 1.68, 'Museum': 1.17, 'Bijoy Soroni': 1.04, 'Manik Mia Ave': 0.67,
+    'Farmgate': 0.38, 'Panthapath': 1.29, 'Green Road': 0.47, 'UAP': 0.0
 }
 
-start_node = 'Home'
-goal_node = 'UAP'
-
-path, total_cost = a_star_search(graph, heuristics, start_node, goal_node)
-
+start, goal = 'Home', 'UAP'
+path, cost = a_star_search(graph, heuristics, start, goal)  
 if path:
     print("Optimal Path:", " -> ".join(path))
-    print(f"Optimal Cost: {total_cost:.2f} km")
+    print(f"Total Cost: {cost:.2f} km")
 else:
-    print("No path found from", start_node, "to", goal_node)
+    print(f"No path found from {start} to {goal}.")
